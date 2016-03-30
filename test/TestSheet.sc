@@ -1,11 +1,16 @@
-import reactivemongo.bson.{BSONString, BSONDocument}
+import org.joda.time.DateTime
+import reactivemongo.bson._
+import models._
 
-val doc = BSONDocument(
+
+val bson = BSONDocument(
 	"title" -> BSONString("some title"),
-	"content" -> BSONString("some content"))
+	"content" -> BSONString("some content"),
+	"publisher" -> BSONString("some publisher")
+)
+val article = Article.read(bson)
 
-doc.getAs[BSONString]("title")
+val articleToBson = Article.write(article)
 
-doc.getAs[BSONString]("title").get
-
-doc.getAs[BSONString]("title").get.value
+val title :Option[String] = bson.getAs[String]("title")
+val content :Option[String] = bson.getAs[String]("content")

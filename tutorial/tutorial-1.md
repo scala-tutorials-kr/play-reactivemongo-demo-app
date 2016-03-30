@@ -151,8 +151,6 @@ case class Article(
 
 id 필드는 BSONObjectID의 Option 입니다. ObjectID는 MongoDB 도큐먼트의 표준 id 타입으로 12 바이트의 고유 값입니다.
 
-# [여기까지 작업했음!]
-
 #### Serializing into BSON / Deserializing from BSON
 
 이제 우리는 이 case class를 위한 BSON serializer와 deserializer를 작성할 수 있습니다. 이것은 데이터베이스에 저장할 수 있도록 Article의 인스턴스를 BSON 도큐먼트로 변환해줍니다. ReactiveMongo는 BSONReader[T]와 BSONWriter[T] 두가지 trait을 제공하는데 이러한 용도로 구현되어야 합니다.
@@ -160,57 +158,48 @@ id 필드는 BSONObjectID의 Option 입니다. ObjectID는 MongoDB 도큐먼트�
 BSON 도큐먼트를 만드는 건 매우 간단합니다: BSONDocument() 메서드에 (String, BSONValue) 형식의 tuple들을 인자로 넘겨주면 됩니다. 아주 기본적인 도큐먼트는 다음과 같이 작성할 수 있습니다:
 
 ``` scala
-BSONDocument(
+val bson = BSONDocument(
   "title" -> BSONString("some title"),
   "content" -> BSONString("some content")
 )
 ```
 
-다른 방법으로는 TraversableBSONDocument의 getAs[BSONValue] 메서드를 사용하면 됩니다:
+다른 방법으로는 BSONDocument의 getAs 메서드를 사용하면 됩니다:
 
 ``` scala
-val title :Option[String] = doc.getAs[BSONString]("title").map(_.value)
-val content :Option[String] = doc.getAs[BSONString]("content").map(_.value)
+val title :Option[String] = bson.getAs[String]("title")
+val content :Option[String] = bson.getAs[String]("content")
 ```
 
-ArticleBSONReader[Article]과 ArticleBSONWriter[Article]을 같은 파일에 구현해 봅시다(models/articles.scala):
+BSONDocumentReader[Article]과 BSONDocumentWriter[Article]을 같은 파일에 동반 객체로 구현해 봅시다(models/articles.scala):
 
 ``` scala
-object Article {
-  implicit object ArticleBSONReader extends BSONReader[Article] {
-    def fromBSON(document: BSONDocument) :Article = {
-      val doc = document.toTraversable
-      Article(
-        doc.getAs[BSONObjectID]("_id"),
-        doc.getAs[BSONString]("title").get.value,
-        doc.getAs[BSONString]("content").get.value,
-        doc.getAs[BSONString]("publisher").get.value,
-        doc.getAs[BSONDateTime]("creationDate").map(dt => new DateTime(dt.value)),
-        doc.getAs[BSONDateTime]("updateDate").map(dt => new DateTime(dt.value)))
-    }
-  }
-  implicit object ArticleBSONWriter extends BSONWriter[Article] {
-    def toBSON(article: Article) = {
-      val bson = BSONDocument(
-        "_id" -> article.id.getOrElse(BSONObjectID.generate),
-        "title" -> BSONString(article.title),
-        "content" -> BSONString(article.content),
-        "publisher" -> BSONString(article.publisher))
-      if(article.creationDate.isDefined)
-        bson += "creationDate" -> BSONDateTime(article.creationDate.get.getMillis)
-      if(article.updateDate.isDefined)
-        bson += "updateDate" -> BSONDateTime(article.updateDate.get.getMillis)
-      bson
-    }
-  }
+object Article extends AnyRef
+		with BSONDocumentReader[Article] with BSONDocumentWriter[Article] {
+
+	// 이런식으로 BSONHandler를 implicit으로 선언하면 BSONDateTime과 DateTime을 묵시적으로 자동 변환할 수 있습니다
+	implicit object BSONDateTimeHandler extends BSONHandler[BSONDateTime, DateTime] {
+		def read(time: BSONDateTime) = new DateTime(time.value)
+		def write(jdtime: DateTime) = BSONDateTime(jdtime.getMillis)
+	}
+
+	// Reader와 Writer를 Macros를 이용하면 손쉽게 만들 수 있습니다.
+	private implicit val reader: BSONDocumentReader[Article] = Macros.reader[Article]
+	private implicit val writer: BSONDocumentWriter[Article] = Macros.writer[Article]
+
+	override def read(bson: BSONDocument): Article = reader.read(bson)
+
+	override def write(article: Article): BSONDocument = writer.write(article)
 }
 ```
 
+---
+# [여기까지 작업했음!]
+---
+
 #### Play Form
 
-We will also define a Play Form to handle HTTP form data submission, in the companion object models.Article. It will be useful when we implement edition (in the next article).
-
-> 우리는 또한 동반 객체 models.Article에서 HTTP form 데이타 핸들링을 위한 Play Form을 정의합니다. 그것은 우리가 구현을 할 때 유용할 것입니다(다음 글에서).
+우리는 또한 동반 객체 models.Article에서 HTTP form 데이타 핸들링을 위한 Play Form을 정의합니다. 그것은 우리가 구현을 할 때 유용할 것입니다(그것은 다음 글에서 다룹니다).
 
 ``` scala
 val form = Form(
