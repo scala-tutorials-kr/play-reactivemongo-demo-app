@@ -6,9 +6,7 @@ Play + ReactiveMongo tutorial & demo app
 
 # [Now working...]
 
-
-
-## 원본 번역
-- [튜토리얼 1장](./origin/toturial-1.md)
-- [튜토리얼 2장]()
-- [튜토리얼 3장]()
+## Tutorials
+- [1 장](https://github.com/scala-tutorials-kr/play-reactivemongo-demo-app/blob/master/tutorial/tutorial-1.md)
+- [2 장]()
+- [3 장]()
