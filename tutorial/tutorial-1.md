@@ -2,7 +2,7 @@
 
 > ReactiveMongo는 Scala를 위한 새로운 MongoDB 드라이버 브랜드입니다. 단지 또 다른 비동기 드라이버가 아닌 당신이 매우 확장성있는 어플리션이션을 디자인할 수 있도록 MongoDB의 무한한 라이브 콜렉션과 파일들 같은 특성을 발휘해주는 현대적인 실시간 웹 어플리케이션을 위한 reactive 드라이버 입니다.
 
-Play는 스칼라 웹 어플리케이션을 제작에 있어 메인 레퍼런스가 됬습니다. 그것은 한층 더 나은 동일한 비전과 역량을 공유하는 데이타베이스 드라이버를 사용합니다. 만약 당신이 Play 2.1 베이스에 MongoDB를 백엔드로 한 웹 어플리케이션을 계획하고 있다면 ReactiveMongo가 당신을 위한 드라이버입니다!
+Play는 스칼라 웹 어플리케이션을 제작에 있어 메인 레퍼런스가 됬습니다. 그것은 한층 더 나은 동일한 비전과 역량을 공유하는 데이타베이스 드라이버를 사용합니다. 만약 당신이 Play 기반에 MongoDB를 백엔드로 한 웹 어플리케이션을 계획하고 있다면 ReactiveMongo가 당신을 위한 드라이버입니다!
 
 이 글은 그러한 프로젝트를 시작하는 과정을 진행합니다. 우리는 article을 관리하는 간단한 어플리케이션을 작성할 것입니다. 각 article은 title, content이 있고 파일을 첨부할 수 있습니다. (그림 파일이나 PDF, archives 등)
 
@@ -193,14 +193,18 @@ object Article extends AnyRef
 }
 ```
 
----
-# [여기까지 작업했음!]
----
-
 #### Play Form
 
-우리는 또한 동반 객체 models.Article에서 HTTP form 데이타 핸들링을 위한 Play Form을 정의합니다. 그것은 우리가 구현을 할 때 유용할 것입니다(그것은 다음 글에서 다룹니다).
+우리는 또한 동반 객체 models.Article에서 HTTP form data 핸들링을 위한 Play Form을 정의합니다. 그것은 우리가 이후 구현에 대해 유용합니다.(그것은 다음 글에서 다룹니다).
 
+우선 /app/models/Article.scala 파일에 다음 import문을 추가합시다.
+``` scala
+import play.api.data.Form
+import play.api.data.Forms._
+import play.api.data.validation.Constraints.pattern
+```
+
+그리고 동일한 파일에서 object Article에 다음 내용을 추가합니다.
 ``` scala
 val form = Form(
   mapping(
@@ -232,6 +236,10 @@ val form = Form(
   }
 )
 ```
+
+---
+# [여기까지 작업했음!]
+---
 
 #### Show a list of articles
 
