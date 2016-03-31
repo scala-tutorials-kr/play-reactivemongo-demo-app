@@ -246,10 +246,6 @@ val form = Form(
 		})
 ```
 
----
-# [여기까지 작업했음!]
----
-
 #### Show a list of articles
 
 ReactiveMongo Play plugin은 Controller들을 대한 mixin trait을 포함하고 있는데 구성 데이타베이스에 대한 유용한 메서드들과 레퍼런스를 제공합니다.
