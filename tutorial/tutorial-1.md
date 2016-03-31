@@ -101,7 +101,7 @@ lazy val root = (project in file(""))
 		.settings(
 			name := "play-reactivemongo-demo-app",
 			version := "1.0",
-			scalaVersion := "2.11.8",
+			scalaVersion := "2.11.7",
 			routesGenerator := InjectedRoutesGenerator,
 			resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases",
 			libraryDependencies ++= Seq(
@@ -118,7 +118,7 @@ lazy val root = (project in file(""))
 play.modules.enabled += "play.modules.reactivemongo.ReactiveMongoModule"
 
 # MongoDB 인스턴스의 uri, 자신의 설정에 맞게 고치도록 합시다
-mongodb.uri = "mongodb://localhost:27017/dev"
+mongodb.uri = "mongodb://localhost:27017/play-reactivemongo-app"
 
 # ReactiveMongo 설정
 mongo-async-driver {
@@ -171,11 +171,20 @@ val title :Option[String] = bson.getAs[String]("title")
 val content :Option[String] = bson.getAs[String]("content")
 ```
 
-BSONDocumentReader[Article]과 BSONDocumentWriter[Article]을 같은 파일에 동반 객체로 구현해 봅시다(models/articles.scala):
+BSONDocumentReader[Article]과 BSONDocumentWriter[Article]을 같은 파일에 동반 객체로 구현해 봅시다 (models/articles.scala)
+
+우선 Article의 동반 객체를 만들기 전에 import문을 추가합니다:
 
 ``` scala
-object Article extends AnyRef
-		with BSONDocumentReader[Article] with BSONDocumentWriter[Article] {
+import play.api.libs.json.Json
+import reactivemongo.bson._
+import reactivemongo.play.json.BSONFormats._
+```
+
+그리고 Article의 동반 객체를 작성합니다.
+
+``` scala
+object Article extends BSONDocumentReader[Article] with BSONDocumentWriter[Article] {
 
 	// 이런식으로 BSONHandler를 implicit으로 선언하면 BSONDateTime과 DateTime을 묵시적으로 자동 변환할 수 있습니다
 	implicit object BSONDateTimeHandler extends BSONHandler[BSONDateTime, DateTime] {
@@ -183,19 +192,22 @@ object Article extends AnyRef
 		def write(jdtime: DateTime) = BSONDateTime(jdtime.getMillis)
 	}
 
-	// Reader와 Writer를 Macros를 이용하면 손쉽게 만들 수 있습니다.
-	private implicit val reader: BSONDocumentReader[Article] = Macros.reader[Article]
-	private implicit val writer: BSONDocumentWriter[Article] = Macros.writer[Article]
+	// BSONDocument Reader와 Writer를 Macros를 이용하면 손쉽게 만들 수 있습니다.
+	implicit val reader: BSONDocumentReader[Article] = Macros.reader[Article]
+	implicit val writer: BSONDocumentWriter[Article] = Macros.writer[Article]
 
+	// Json 변환을 위한 reader/writer foramt도 선언합니다
+	implicit val articleFormat = Json.format[Article]
+
+	// BSONDocument <-> Atricle 사이에 변환을 제공합니다
 	override def read(bson: BSONDocument): Article = reader.read(bson)
-
 	override def write(article: Article): BSONDocument = writer.write(article)
 }
 ```
 
 #### Play Form
 
-우리는 또한 동반 객체 models.Article에서 HTTP form data 핸들링을 위한 Play Form을 정의합니다. 그것은 우리가 이후 구현에 대해 유용합니다.(그것은 다음 글에서 다룹니다).
+우리는 또한 동반 객체 models.Article에서 HTTP form data 핸들링을 위한 Play Form을 정의합니다. 그것은 우리가 이후 구현에 유용합니다.(그것은 다음 글에서 다룹니다).
 
 우선 /app/models/Article.scala 파일에 다음 import문을 추가합시다.
 ``` scala
@@ -207,34 +219,31 @@ import play.api.data.validation.Constraints.pattern
 그리고 동일한 파일에서 object Article에 다음 내용을 추가합니다.
 ``` scala
 val form = Form(
-  mapping(
-    "id" -> optional(of[String] verifying pattern(
-      """[a-fA-F0-9]{24}""".r,
-      "constraint.objectId",
-      "error.objectId")),
-    "title" -> nonEmptyText,
-    "content" -> text,
-    "publisher" -> nonEmptyText,
-    "creationDate" -> optional(of[Long]),
-    "updateDate" -> optional(of[Long])
-  ) { (id, title, content, publisher, creationDate, updateDate) =>
-    Article(
-      id.map(new BSONObjectID(_)),
-      title,
-      content,
-      publisher,
-      creationDate.map(new DateTime(_)),
-      updateDate.map(new DateTime(_)))
-  } { article =>
-    Some(
-      (article.id.map(_.stringify),
-      article.title,
-      article.content,
-      article.publisher,
-      article.creationDate.map(_.getMillis),
-      article.updateDate.map(_.getMillis)))
-  }
-)
+		mapping(
+			"_id" -> optional(text verifying pattern(
+				"""[a-fA-F0-9]{24}""".r, error = "error.objectId")),
+			"title" -> nonEmptyText,
+			"content" -> text,
+			"publisher" -> nonEmptyText,
+			"creationDate" -> optional(longNumber),
+			"updateDate" -> optional(longNumber)) {
+			(_id, title, content, publisher, creationDate, updateDate) =>
+				Article(
+					_id.map(BSONObjectID(_)),
+					title,
+					content,
+					publisher,
+					creationDate.map(new DateTime(_)),
+					updateDate.map(new DateTime(_)))
+		} { article =>
+			Some(
+				(article._id.map(_.stringify),
+						article.title,
+						article.content,
+						article.publisher,
+						article.creationDate.map(_.getMillis),
+						article.updateDate.map(_.getMillis)))
+		})
 ```
 
 ---
@@ -243,61 +252,59 @@ val form = Form(
 
 #### Show a list of articles
 
-The ReactiveMongo Play Plugin ships with a mixin trait for Controllers, providing some useful methods and a reference to the configured database.
-
-> ReactiveMongo Play plugin은 Controller들을 대한 mixin trait을 포함하고 있는데 구성 데이타베이스에 대한 유용한 메서드들과 레퍼런스를 제공합니다.
+ReactiveMongo Play plugin은 Controller들을 대한 mixin trait을 포함하고 있는데 구성 데이타베이스에 대한 유용한 메서드들과 레퍼런스를 제공합니다.
 
 ##### Controller
+
+/app/controllers/Articles.scala 파일을 작성합니다:
 
 ``` scala
 package controllers
 
-import models._
-import play.api._
-import play.api.mvc._
-import play.api.Play.current
-import play.modules.reactivemongo._
+import scala.concurrent.Future
+import com.google.inject.Inject
+import play.api.mvc.{Action, Controller}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.modules.reactivemongo.{ReactiveMongoApi, ReactiveMongoComponents, MongoController}
+import reactivemongo.api.collections.bson.BSONCollection
+import reactivemongo.bson.BSONDocument
+import models.Article
 
-import reactivemongo.api._
-import reactivemongo.bson._
-import reactivemongo.bson.handlers.DefaultBSONHandlers._
-
-object Articles extends Controller with MongoController {
+class Articles @Inject()(val reactiveMongoApi: ReactiveMongoApi)
+		extends Controller with MongoController with ReactiveMongoComponents {
+        
   def index = Action {
     Ok()
   }
 }
 ```
 
-We need to retrive all the articles from our collection articles. To do this, we get a reference to this collection and run a basic query:
-
-> 우리는 articles 콜렉션으로부터 모든 article들을 얻을 필요가 있습니다. 이를 위해 우리는 컬렉션에 대한 참조를 얻고 기본 쿼리를 실행합니다:
+우리는 articles 콜렉션으로부터 모든 article들을 얻을 필요가 있습니다. 이를 위해 우리는 컬렉션에 대한 참조를 얻고 기본 쿼리를 실행합니다:
 
 ``` scala
-  def index = Action { implicit request =>
-    Async {
-      implicit val reader = Article.ArticleBSONReader
-      val collection = db.collection("articles")
-      // empty query to match all the documents
-      val query = BSONDocument()
-      // the future cursor of documents
-      val found = collection.find(query)
-      // build (asynchronously) a list containing all the articles
-      found.toList.map { articles =>
-        Ok(views.html.articles(articles, activeSort))
-      }
-    }
+	val collection = db[BSONCollection]("articles")
+
+	def index = Action.async { implicit request =>
+		// empty query to match all the documents
+		val query = BSONDocument()
+		// the future cursor of documents
+		val cursor = collection.find(query).cursor[Article]()
+		// gather all the JsObjects in a list
+		val futureList: Future[List[Article]] = cursor.collect[List]()
+
+        futureList.map { articles =>
+			Ok(views.html.articles(articles))
+		} recover {
+			case _ => InternalServerError
+		}
+	}
 ```
 
-Note the Async method: our controller action is actually return a future result.
-
-> 비동기 메서드를 참고: 우리의 controller action은 현시점에서 future result를 리턴합니다.
+비동기 메서드를 참고: 우리의 controller action은 현시점에서 future result를 리턴합니다.
 
 ##### View
 
-Now, let’s create a view file app/views/index.scala.html for this action result:
-
-> 이제 이 action result에 대한 view 파일 app/views/index.scala.html 을 만듭시다:
+이제 이 action result에 대한 view 파일 app/views/articles.scala.html 을 만듭시다:
 
 ```
 @(articles: List[models.Article])
@@ -317,9 +324,7 @@ Now, let’s create a view file app/views/index.scala.html for this action resul
 
 ##### Route
 
-Let’s declare the matching route in the conf/routes file:
-
-> cnof/routes 파일에 매칭되는 경로를 선언합시다:
+cnof/routes 파일에 매칭되는 경로를 선언합시다:
 
 
 ```
@@ -328,62 +333,47 @@ GET     /                           controllers.Articles.index
 
 ##### Run it!
 
-Now, you can start play:
-
-> 이제 당신은 Play를 시작할 수 있습니다:
+이제 당신은 Play를 시작할 수 있습니다:
 
 ```
-$ cd articles
-$ ../play-2.1-SNAPSHOT/play
-       _            _ 
- _ __ | | __ _ _  _| |
-| '_ \| |/ _' | || |_|
-|  __/|_|\____|\__ (_)
-|_|            |__/ 
-             
-play! 2.1-SNAPSHOT, http://www.playframework.org
+$ activator run
+[info] Loading project definition from /play-reactivemongo-demo-app/project
+[info] Updating {/play-reactivemongo-demo-app/project/}play-reactivemongo-demo-app-build...
+[info] Resolving org.fusesource.jansi#jansi;1.4 ...
+[info] Done updating.
+[info] Set current project to play-reactivemongo-demo-app (in build file:/play-reactivemongo-demo-app/)
+[info] Updating {file:/play-reactivemongo-demo-app/}root...
+[info] Resolving jline#jline;2.12.1 ...
+[info] Done updating.
 
-> Type "help play" or "license" for more information.
-> Type "exit" or use Ctrl+D to leave this console.
+--- (Running the application, auto-reloading is enabled) ---
 
-[articles] $ run
-
-[info] Updating {file:/Volumes/Data/code/article/articles/}articles...
-[info] Done updating.                                                                  
---- (Running the application from SBT, auto-reloading is enabled) ---
-
-[info] play - Listening for HTTP on /0.0.0.0:9000
+[info] p.c.s.NettyServer - Listening for HTTP on /0:0:0:0:0:0:0:0:9000
 
 (Server started, use Ctrl+D to stop and go back to the console...)
 ```
 
-… and access http://localhost:9000 ;)
+... 그리고 http://localhost:9000 으로 접속)
 
-> ... 그리고 http://localhost:9000 으로 접속)
+```
+No articles available yet.
+```
 
-The list you get is empty. That is perfectly normal since our database does not contain any article. Let’s open a mongo console, connect to the database and add an article:
-
-> 당신이 얻은 목록은 비어 있습니다. 우리의 데이타베이스는 아직 어떤 article도 담고 있지 않기 때문에 완벽하게 정상입니다. mongo console을 열고 데이타베이스에 접속해서 article을 추가해봅시다:
+당신이 얻은 목록은 비어 있습니다. 우리의 데이타베이스는 아직 어떤 article도 담고 있지 않기 때문에 완벽하게 정상입니다. mongo console을 열고 데이타베이스에 접속해서 article을 추가해봅시다:
 
 ```
 $ mongo
 MongoDB shell version: 2.2.0
 connecting to: 127.0.0.1:27017/test
-> use reactivemongo-app
-switched to db reactivemongo-app
+> use play-reactivemongo-app
+switched to db play-reactivemongo-app
 > db.articles.save({ "content" : "some content", "creationDate" : new Date(), "publisher" : "Jack", "title" : "A cool article", "updateDate" : new Date()) })
 ```
 
 ##### Go further
 
-In the next articles, we will continue this application (edition, attachments submission…), and cover more advanced features of ReactiveMongo, such as running complex queries, building indexes, and using GridFS.
+다음 글에서 우리는 이 어플리케이션과 더 많은 ReactiveMongo의 고급 기능들, 말하자면 복잡한 쿼리, index 구축, GridFS 사용하기를 포함해서 계속 진행합니다.
 
-> 다음 글에서 우리는 이 어플리케이션과 더 많은 ReactiveMongo의 고급 기능들, 말하자면 복잡한 쿼리, index 구축, GridFS 사용하기를 포함해서 계속 진행합니다.
+한편 당신은 완성된 어플리케이션을 가지고 조작할 수 있습니다.
 
-Meanwhile, you can grab the complete application and start hacking with it.
-
-> 한편 당신은 완성된 어플리케이션을 가지고 조작할 수 있습니다.
-
-Don’t hesitate to post your questions and comments to the ReactiveMongo Google Group.
-
-> ReactiveMongo Google Group에 질문과 의견을 게시하는 것을 망설이지 마세요.
+ReactiveMongo Google Group에 질문과 의견을 게시하는 것을 망설이지 마세요.

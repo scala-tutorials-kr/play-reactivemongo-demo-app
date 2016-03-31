@@ -1,0 +1,13 @@
+@(articles: List[models.Article])
+@if(articles.isEmpty) {
+    <p>No articles available yet.</p>
+} else {
+    <ul>
+    @articles.map { article =>
+        <li>
+            <a href="#edittoimplement">@article.title</a>
+            <em>by @article.publisher</em>
+        </li>
+    }
+    </ul>
+}
