@@ -1,6 +1,6 @@
 #  Writing Reactive Apps with ReactiveMongo and Play, Pt. 1
 
-> ReactiveMongo는 Scala를 위한 새로운 MongoDB 드라이버 브랜드입니다. 단지 또 다른 비동기 드라이버가 아닌 당신이 매우 확장성있는 어플리션이션을 디자인할 수 있도록 MongoDB의 무한한 라이브 콜렉션과 파일들 같은 특성을 발휘해주는 현대적인 실시간 웹 어플리케이션을 위한 reactive 드라이버 입니다.
+> ReactiveMongo는 MongoDB를 연결하는 새로운 Scala driver 입니다. 기존의 비동기 방식의 드라이버보다 더 좋은 점은, 실시간 모던 웹에서 MongoDB의 강점인 무제한 Live Collection/File Streaming 을 잘 활용할 수 있도록, 확장성 있는 어플리케이션을 작성하도록 설계된 Reactive 드라이버라는 것입니다.
 
 Play는 스칼라 웹 어플리케이션을 제작에 있어 메인 레퍼런스가 됬습니다. 그것은 한층 더 나은 동일한 비전과 역량을 공유하는 데이타베이스 드라이버를 사용합니다. 만약 당신이 Play 기반에 MongoDB를 백엔드로 한 웹 어플리케이션을 계획하고 있다면 ReactiveMongo가 당신을 위한 드라이버입니다!
 
@@ -207,7 +207,7 @@ object Article extends BSONDocumentReader[Article] with BSONDocumentWriter[Artic
 
 #### Play Form
 
-우리는 또한 동반 객체 models.Article에서 HTTP form data 핸들링을 위한 Play Form을 정의합니다. 그것은 우리가 이후 구현에 유용합니다.(그것은 다음 글에서 다룹니다).
+우리는 또한 동반 객체 models.Article에서 HTTP form data 핸들링을 위한 Play Form을 정의합니다. 그것은 우리가 이후 구현에 유용합니다.(그것은 다음 글에서 다룹니다)
 
 우선 /app/models/Article.scala 파일에 다음 import문을 추가합시다.
 ``` scala
