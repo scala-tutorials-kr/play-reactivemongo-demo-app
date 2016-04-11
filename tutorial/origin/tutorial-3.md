@@ -6,8 +6,8 @@ In the previous article, we saw how to insert and update documents, and to do mo
 
 There is one feature that our application lacks sor far: the ability to upload attachments. For this purpose we will use GridFS, a protocol over MongoDB that handles file storage.
 
-> #### How does GriFS work?
-When you save some file with GridFS, you are actually dealing with two collections: files and chunks. The metadata of the file are saved as a document into the files collection, while the contents are splitted into chunks (usually of 256kB) that are stored into the chunks collection. Then one can find files by performing regular queries on files, and retrieve their contents by merging all their chunks.
+    #### How does GriFS work?
+    When you save some file with GridFS, you are actually dealing with two collections: files and chunks. The metadata of the file are saved as a document into the files collection, while the contents are splitted into chunks (usually of 256kB) that are stored into the chunks collection. Then one can find files by performing regular queries on files, and retrieve their contents by merging all their chunks.
 
 ## Summary
 
@@ -222,4 +222,4 @@ def getAttachment(id: String) = Action {
 
 That’s the last article of this series. But we did not cover all the features of ReactiveMongo, like bulk insert, using capped collections, run commands… So many topics that will be covered in future articles :)
 
-Meanwhile, you can browse the [Scaladoc](), post your questions and comments to the [ReactiveMongo]() Google Group. And, of course, you are invited to grab [the complete application]() and start hacking with it!
+Meanwhile, you can browse the [Scaladoc](http://reactivemongo.org/releases/0.11/api/index.html#package), post your questions and comments to the [ReactiveMongo](https://groups.google.com/forum/#!forum/reactivemongo) Google Group. And, of course, you are invited to grab [the complete application](https://github.com/sgodbillon/reactivemongo-demo-app) and start hacking with it!
