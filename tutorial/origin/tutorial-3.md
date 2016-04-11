@@ -6,7 +6,7 @@ In the previous article, we saw how to insert and update documents, and to do mo
 
 There is one feature that our application lacks sor far: the ability to upload attachments. For this purpose we will use GridFS, a protocol over MongoDB that handles file storage.
 
-- #### How does GriFS work?
+#### How does GriFS work?
 When you save some file with GridFS, you are actually dealing with two collections: files and chunks. The metadata of the file are saved as a document into the files collection, while the contents are splitted into chunks (usually of 256kB) that are stored into the chunks collection. Then one can find files by performing regular queries on files, and retrieve their contents by merging all their chunks.
 
 ## Summary
