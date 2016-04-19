@@ -93,7 +93,7 @@ LICENSE 파일도 필요없기 때문에 삭제합니다.
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.6")
 ```
 
-ReactiveMongo와 ReactiveMongo play plugin을 사용하기 위해 우리는 의존관계를 설정합니다. /build.scala를 수정합시다:
+ReactiveMongo와 ReactiveMongo play plugin을 사용하기 위해 우리는 의존관계를 설정합니다. /build.sbt를 수정합시다:
 
 ``` scala
 lazy val root = (project in file(""))
@@ -363,7 +363,7 @@ MongoDB shell version: 2.2.0
 connecting to: 127.0.0.1:27017/test
 > use play-reactivemongo-app
 switched to db play-reactivemongo-app
-> db.articles.save({ "content" : "some content", "creationDate" : new Date(), "publisher" : "Jack", "title" : "A cool article", "updateDate" : new Date()) })
+> db.articles.save({ "content" : "some content", "creationDate" : new Date(), "publisher" : "Jack", "title" : "A cool article", "updateDate" : new Date() })
 ```
 
 ##### Go further
