@@ -27,6 +27,7 @@ Play는 스칼라 웹 어플리케이션을 제작에 있어 메인 레퍼런스
 Play는 현재 2.5 버전까지 나와있지만 ReactiveMongo Play plugin이 아직 2.4 버전까지만 지원하므로 우리는 2.4를 기준으로 작업합니다.
 
 [acrivator](https://www.lightbend.com/community/core-tools/activator-and-sbt)를 이용해서 새로운 Scala 어플리케이션을 만들어 봅시다.
+우리는 앱을 처음부터 만들어 나가기 때문에 템플릿은 Scala 프로젝트에서 가장 기본적인 4번 minimal-scala를 선택 합니다.
 
 ```
 $ activator new
