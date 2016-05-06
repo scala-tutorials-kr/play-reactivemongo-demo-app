@@ -93,7 +93,8 @@ LICENSE 파일도 필요없기 때문에 삭제합니다.
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.6")
 ```
 
-ReactiveMongo와 ReactiveMongo play plugin을 사용하기 위해 우리는 의존관계를 설정합니다. /build.sbt를 수정합시다:
+ReactiveMongo와 ReactiveMongo play plugin을 사용하기 위해 우리는 의존관계를 설정합니다.
+/build.sbt 파일의 내용을 전부 지우고 새로 작성합니다.:
 
 ``` scala
 lazy val root = (project in file(""))
@@ -320,7 +321,7 @@ class Articles @Inject()(val reactiveMongoApi: ReactiveMongoApi)
 
 ##### Route
 
-cnof/routes 파일에 매칭되는 경로를 선언합시다:
+conf/routes 파일(확장자 없음)에 매칭되는 경로를 선언합시다:
 
 
 ```
