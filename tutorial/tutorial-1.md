@@ -173,7 +173,7 @@ val title :Option[String] = bson.getAs[String]("title")
 val content :Option[String] = bson.getAs[String]("content")
 ```
 
-BSONDocumentReader[Article]과 BSONDocumentWriter[Article]을 같은 파일에 동반 객체로 구현해 봅시다 (models/articles.scala)
+BSONDocumentReader[Article]과 BSONDocumentWriter[Article]을 같은 파일에 동반 객체로 구현해 봅시다 (models/article.scala)
 
 우선 Article의 동반 객체를 만들기 전에 import문을 추가합니다:
 
