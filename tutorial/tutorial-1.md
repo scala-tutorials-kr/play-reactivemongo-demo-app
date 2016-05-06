@@ -222,8 +222,7 @@ import play.api.data.validation.Constraints.pattern
 ``` scala
 val form = Form(
 		mapping(
-			"_id" -> optional(text verifying pattern(
-				"""[a-fA-F0-9]{24}""".r, error = "error.objectId")),
+			"_id" -> optional(text verifying pattern("""[a-fA-F0-9]{24}""".r, error = "error.objectId")),
 			"title" -> nonEmptyText,
 			"content" -> text,
 			"publisher" -> nonEmptyText,
