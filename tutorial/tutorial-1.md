@@ -228,20 +228,20 @@ val form = Form(
 			"publisher" -> nonEmptyText,
 			"creationDate" -> optional(longNumber),
 			"updateDate" -> optional(longNumber))
-			{ (_id, title, content, publisher, creationDate, updateDate) =>	Article(
-				_id.map(BSONObjectID(_)),
-				title,
-				content,
-				publisher,
-				creationDate.map(new DateTime(_)),
-				updateDate.map(new DateTime(_)))}
-			{ article => Some(
-				(article._id.map(_.stringify),
-				article.title,
-				article.content,
-				article.publisher,
-				article.creationDate.map(_.getMillis),
-				article.updateDate.map(_.getMillis)))})
+		{ (_id, title, content, publisher, creationDate, updateDate) =>	Article(
+			_id.map(BSONObjectID(_)),
+			title,
+			content,
+			publisher,
+			creationDate.map(new DateTime(_)),
+			updateDate.map(new DateTime(_)))}
+		{ article => Some(
+			(article._id.map(_.stringify),
+			article.title,
+			article.content,
+			article.publisher,
+			article.creationDate.map(_.getMillis),
+			article.updateDate.map(_.getMillis)))})
 ```
 
 #### Show a list of articles
