@@ -235,8 +235,8 @@ val form = Form(
 			publisher,
 			creationDate.map(new DateTime(_)),
 			updateDate.map(new DateTime(_)))}
-		{ article => Some(
-			(article._id.map(_.stringify),
+		{ article => Some((
+			article._id.map(_.stringify),
 			article.title,
 			article.content,
 			article.publisher,
