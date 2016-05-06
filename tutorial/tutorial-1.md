@@ -166,7 +166,7 @@ val bson = BSONDocument(
 )
 ```
 
-다른 방법으로는 BSONDocument의 getAs 메서드를 사용하면 됩니다:
+값을 얻을 때는 BSONDocument의 getAs 메서드를 사용하면 됩니다:
 
 ``` scala
 val title :Option[String] = bson.getAs[String]("title")
