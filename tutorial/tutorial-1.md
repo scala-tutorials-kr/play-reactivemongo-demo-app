@@ -143,7 +143,7 @@ import org.joda.time.DateTime
 import reactivemongo.bson._
 
 case class Article(
-    id: Option[BSONObjectID],
+    _id: Option[BSONObjectID],
     title: String,
     content: String,
     publisher: String,
