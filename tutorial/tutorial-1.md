@@ -134,7 +134,7 @@ mongo-async-driver {
 
 우리의 article들은 title, content 그리고 publisher를 가지고 있습니다. 우리는 날짜 별로 정렬 할 수 있도록 생성 날짜와 수정 날짜를 추가합니다.
 
-/app/models/articles.scala 파일을 만들고 case class Article을 작성합시다:
+app/models/article.scala 파일을 만들고 case class Article을 작성합시다:
 
 ``` scala
 package models
@@ -173,7 +173,7 @@ val title :Option[String] = bson.getAs[String]("title")
 val content :Option[String] = bson.getAs[String]("content")
 ```
 
-BSONDocumentReader[Article]과 BSONDocumentWriter[Article]을 같은 파일에 동반 객체로 구현해 봅시다 (models/article.scala)
+BSONDocumentReader[Article]과 BSONDocumentWriter[Article]을 같은 파일에 동반 객체로 구현해 봅시다 (app/models/article.scala)
 
 우선 Article의 동반 객체를 만들기 전에 import문을 추가합니다:
 
@@ -211,7 +211,7 @@ object Article extends BSONDocumentReader[Article] with BSONDocumentWriter[Artic
 
 우리는 또한 동반 객체 models.Article에서 HTTP form data 핸들링을 위한 Play Form을 정의합니다. 그것은 우리가 이후 구현에 유용합니다.(그것은 다음 글에서 다룹니다)
 
-우선 /app/models/Article.scala 파일에 다음 import문을 추가합시다.
+우선 app/models/Article.scala 파일에 다음 import문을 추가합시다.
 ``` scala
 import play.api.data.Form
 import play.api.data.Forms._
@@ -250,7 +250,7 @@ ReactiveMongo Play plugin은 Controller에 대한 mixin trait을 포함하고 �
 
 ##### Controller
 
-/app/controllers/Articles.scala 파일을 작성합니다:
+app/controllers/Articles.scala 파일을 작성합니다:
 
 ``` scala
 package controllers
@@ -327,7 +327,7 @@ GET     /                           controllers.Articles.index
 
 ##### Run it!
 
-이제 당신은 Play를 시작할 수 있습니다:
+이제 Play를 시작할 수 있습니다:
 
 ```
 $ activator run
@@ -353,7 +353,7 @@ $ activator run
 No articles available yet.
 ```
 
-당신이 얻은 목록은 비어 있습니다. 우리의 데이타베이스는 아직 어떤 article도 담고 있지 않기 때문에 완벽하게 정상입니다. mongo console을 열고 데이타베이스에 접속해서 article을 추가해봅시다:
+아직은 데이타베이스에 저장된 atricles 콜렉션이 비어 있습니다. 우리의 데이타베이스는 아직 어떤 article도 담고 있지 않기 때문에 완벽하게 정상입니다. mongo console을 열고 데이타베이스에 접속해서 article을 추가해봅시다:
 
 ```
 $ mongo
